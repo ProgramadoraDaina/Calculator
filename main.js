@@ -1,21 +1,92 @@
 const display = document.querySelector(".calculadora-display");/*busca un elemento de html con la clase "display" asi
-                                                   hacer todo lo que yo quiera*/
+                                                                hacer todo lo que yo quiera*/
 
 const keypad = document.querySelector(".calculadora-keypad");/*busca un elemento de html con la clase "keypad"
-                                                     asi hacer todo lo que yo quiera*/
+                                                             asi hacer todo lo que yo quiera*/
+
+const historyContainer = document.querySelector(".historial-lista");/*Busca en el HTML el elemento con la clase "historial-lista"
+                                                                    y lo guarda en la variable historyContainer para poder
+                                                                    usarlo en JS*/
+
 if (!display) {
-  throw new Error("No se encontró el display de la calculadora")
+    throw new Error("No se encontró el display de la calculadora");
 }
 
 if (!keypad) {
-  throw new Error("No se encontró el keypad de la calculadora")
+    throw new Error("No se encontró el keypad de la calculadora");
 }
-const calculatorState = {/*Objeto que guarda el estado de la calculadora, es decir, el valor actual, el
-                         valor anterior y el operador seleccionado*/
-    currentValue: "0",
-    previousValue: null,
-    operator: null
-};
+if(!historyContainer){
+    throw new Error("no se encontro el historyContainer");
+}
+
+class Calculator {
+
+    constructor() {
+        this.currentValue = "0";/*guarda valor actual que se muestra en la pantalla de la calculadora*/
+        this.previousValue = null;/*guarda el valor anterior para usarlo en operaciones*/
+        this.operator = null;/*variable para guardar el operador seleccionado*/
+        this.history = [];
+    }
+
+    handleNumber(Value) {
+        if (this.currentValue === "0") {/*si el valor actual es cero*/
+
+            this.currentValue = Value;/*actualiza el valor actual*/
+            return;/*sale*/
+        }
+        this.currentValue += Value;/*si uno pone  mas de un numero se concatenan los numeros, osea
+                                        15, 22, 31 */
+    }
+    handleOperator(operator) {
+        this.previousValue = this.currentValue;
+        this.operator = operator;
+        this.currentValue = "0";
+    }
+
+    clear() {/*limpia la calculadora*/
+        this.previousValue = null;
+        this.currentValue = "0";
+        this.operator = null;
+    }
+    addDecimal() {
+        if (this.currentValue.includes(".")) {/*si el valor actual ya incluye un punto decimal no hacer nada*/
+            return
+        }
+        this.currentValue += ".";/*sino aplicar el punto decimal*/
+    }
+    calculateResult() {
+    if (this.previousValue === null || this.currentValue === null) {/*si no hay valor previo o valor actual no hacer nada*/
+        return;
+    }
+    const previous = Number(this.previousValue);
+    const current = Number(this.currentValue);
+    let valueResult = 0;
+    if (this.operator === "*") {/*si el operador elegido es **/
+        valueResult = previous * current;/*multiplica*/
+    }
+    if (this.operator === "+") {/*si el operador elegido es +*/
+        valueResult = previous + current;/*suma*/
+    }
+    if (this.operator === "-") {/*si el operador es -*/
+        valueResult = previous - current;/*resta*/
+    }
+    if (this.operator === "/") {/*si el operador es /*/
+        valueResult = previous / current;/*divide*/
+    }
+    const operation = this.previousValue + " " + this.operator + " " +
+                      this.currentValue + " = " + valueResult;/*establece como se va a ver la operacion
+                                                              entera (sintaxis de como se va a ver cada
+                                                              operacion del historial)*/
+
+    this.history.push(operation);/*añade operation al vector history*/
+    
+    this.currentValue = String(valueResult);/*convierte al valor actual un string con el resultado de la
+                                            operacion realizada*/
+    this.previousValue = null;
+    this.operator = null;
+}
+}
+const calculator = new Calculator();
 
 const botones = [{ Label: "7", type: "number" },
 { Label: "8", type: "number" },
@@ -34,14 +105,27 @@ const botones = [{ Label: "7", type: "number" },
 { Label: ".", type: "decimal" },
 { Label: "+", type: "operator" },
 { Label: "C", type: "clear" }];
+
 function renderDisplay() {
-    display.textContent = calculatorState.currentValue;/*Actualiza el contenido del elemento de
+    display.textContent = calculator.currentValue;/*Actualiza el contenido del elemento de
                                                        visualización con el valor actual almacenado en el
                                                        estado de la calculadora, para mostrarlo al usuario*/
 }
-function createButton () {
-  const boton = document.createElement("button")
-  return boton
+function renderHistory() {
+    historyContainer.innerHTML = "";/*Limpia el contenido del contenedor HTML donde se muestra el historial*/
+
+    calculator.history.forEach(operation => {/*recorre el historial de operaciones*/
+        const p = document.createElement("p");/*crea elemento parrafo*/
+
+        p.textContent = operation;/*Le asigna el texto de la operación al parrafo*/
+
+        historyContainer.appendChild(p);/*Agrega ese parrafo al contenedor en el historial*/
+    });
+}
+
+function createButton() {
+    const boton = document.createElement("button")/*crea el elemento boton*/
+    return boton/*retorna el boton*/
 }
 botones.forEach(function (botonConfig) {/*Recorrer todos los elementos del array buttons uno por uno */
 
@@ -66,60 +150,12 @@ botones.forEach(function (botonConfig) {/*Recorrer todos los elementos del array
                            se muestre en la interfaz de usuario*/
 })
 
-function handleNumber(Value) {
-    if (calculatorState.currentValue === "0") {/*si el valor actual es cero*/
+function buttonPress(event) {
+    const boton = event.target.closest("button")
 
-        calculatorState.currentValue = Value;/*actualiza el valor actual*/
-        return;/*sale*/
-    }
-    calculatorState.currentValue += Value;/*si uno pone  mas de un numero se concatenan los numeros, osea
-                                        15, 22, 31 */
-}
-function handleOperator(operator) {
-    calculatorState.previousValue = calculatorState.currentValue;
-    calculatorState.operator = operator;
-    calculatorState.currentValue = "0";
-}
-function clearCalculator() {
-    calculatorState.previousValue = null;
-    calculatorState.currentValue = "0";
-    calculatorState.operator = null;
-}
-function addDecimal(){
-    if(calculatorState.currentValue.includes(".")){
+    if (!boton) {
         return
     }
-    calculatorState.currentValue+= ".";
-}
-function calculateResult() {
-    if (calculatorState.previousValue === null || calculatorState.currentValue === null) {
-        return;
-    }
-    const previous = Number(calculatorState.previousValue);
-    const current = Number(calculatorState.currentValue);
-    let valueResult = 0;
-    if (calculatorState.operator === "*") {
-        valueResult = previous * current;
-    }
-    if (calculatorState.operator === "+") {
-        valueResult = previous + current;
-    }
-    if (calculatorState.operator === "-") {
-        valueResult = previous - current;
-    }
-    if (calculatorState.operator === "/") {
-        valueResult = previous / current;
-    }
-    calculatorState.currentValue = String(valueResult);
-    calculatorState.previousValue = null;
-    calculatorState.operator = null;
-}
-function buttonPress (event) {
-  const boton = event.target.closest("button")
-
-  if (!boton) {
-    return
-  }
     const type = boton.dataset.type;/*Obtiene el tipo de botón (número, operador o borrar) del atributo de
                                     datos del botón clickeado*/
 
@@ -130,19 +166,20 @@ function buttonPress (event) {
                              depuración*/
 
     if (type === "number") {
-        handleNumber(Value);
+        calculator.handleNumber(Value);
     }
     if (type === "operator") {
-        handleOperator(Value);
+        calculator.handleOperator(Value);
     }
     if (type === "clear") {
-        clearCalculator();
+        calculator.clear();
     }
     if (type === "equals") {
-        calculateResult();
+        calculator.calculateResult();
+        renderHistory();
     }
-    if(type === "decimal"){
-        addDecimal();
+    if (type === "decimal") {
+        calculator.addDecimal();
     }
     renderDisplay();
 }
